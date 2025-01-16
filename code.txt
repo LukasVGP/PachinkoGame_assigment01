@@ -1,0 +1,306 @@
+Unity Scripts Export
+Scripts Path: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\Ball.cs ===
+
+using UnityEngine;
+
+public class Ball : MonoBehaviour
+{
+    [SerializeField] private float maxVelocity = 12f;
+    [SerializeField] private float bounceForce = 2.5f;
+    [SerializeField] private float randomForce = 0.5f;
+    [SerializeField] private float downwardForce = 3f;
+    private Rigidbody2D rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        rb.mass = 2f; // Heavy metal ball
+    }
+
+    void FixedUpdate()
+    {
+        // Constant downward force
+        rb.AddForce(Vector2.down * downwardForce);
+
+        // Limit upward velocity severely
+        if (rb.linearVelocity.y > 0)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.3f);
+        }
+
+        // Limit overall velocity
+        if (rb.linearVelocity.magnitude > maxVelocity)
+        {
+            rb.linearVelocity = rb.linearVelocity.normalized * maxVelocity;
+        }
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Peg"))
+        {
+            Vector2 bounceDirection = (transform.position - collision.transform.position).normalized;
+            // Emphasize horizontal movement
+            bounceDirection.x *= 1.5f;
+            bounceDirection.y = Mathf.Min(bounceDirection.y * 0.2f, 0);
+            bounceDirection += new Vector2(Random.Range(-randomForce, randomForce), 0);
+            rb.AddForce(bounceDirection * bounceForce, ForceMode2D.Impulse);
+        }
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\BallSpawner.cs ===
+
+using UnityEngine;
+using TMPro;
+
+public class BallSpawner : MonoBehaviour
+{
+    [SerializeField] private GameObject ballPrefab;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float minX = -2.5f;
+    [SerializeField] private float maxX = 2.5f;
+    [SerializeField] private float maxY = 4.5f;
+    [SerializeField] private TextMeshProUGUI countdownText;
+
+    private bool isMovingRight = true;
+    private bool isCountingDown = false;
+    private float countdownTimer = 3f;
+    private Vector3 spawnPosition;
+
+    void Start()
+    {
+        // Ensure countdown text is properly positioned and visible
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(false);
+            countdownText.fontSize = 72;
+            countdownText.color = Color.red;
+            countdownText.transform.position = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        }
+    }
+
+    void Update()
+    {
+        // Always move the triangle
+        MoveTriangle();
+
+        // Handle countdown and ball spawning
+        if (Input.GetKeyDown(KeyCode.Space) && !isCountingDown)
+        {
+            StartCountdown();
+        }
+
+        if (isCountingDown)
+        {
+            HandleCountdown();
+        }
+    }
+
+    void MoveTriangle()
+    {
+        float movement = isMovingRight ? moveSpeed * Time.deltaTime : -moveSpeed * Time.deltaTime;
+        Vector3 newPosition = transform.position + new Vector3(movement, 0, 0);
+
+        if (newPosition.x >= maxX)
+        {
+            isMovingRight = false;
+            newPosition.x = maxX;
+        }
+        else if (newPosition.x <= minX)
+        {
+            isMovingRight = true;
+            newPosition.x = minX;
+        }
+
+        newPosition.y = maxY;
+        transform.position = newPosition;
+    }
+
+    void StartCountdown()
+    {
+        isCountingDown = true;
+        countdownTimer = 3f;
+        countdownText.gameObject.SetActive(true);
+    }
+
+    void HandleCountdown()
+    {
+        countdownTimer -= Time.deltaTime;
+        countdownText.text = Mathf.Ceil(countdownTimer).ToString();
+
+        if (countdownTimer <= 0)
+        {
+            SpawnBall();
+            countdownText.gameObject.SetActive(false);
+            isCountingDown = false;
+        }
+    }
+
+    void SpawnBall()
+    {
+        Instantiate(ballPrefab, transform.position, Quaternion.identity);
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\Ball_Destroy.cs ===
+
+using UnityEngine;
+
+public class BallDestroyer : MonoBehaviour
+{
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ball"))
+        {
+            Destroy(collision.gameObject);
+        }
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\Ball_Spin.cs ===
+
+using UnityEngine;
+
+public class BallSpin : MonoBehaviour
+{
+    [SerializeField] private float spinForce = 200f;
+    private Rigidbody2D rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        // Add initial random spin
+        rb.AddTorque(Random.Range(-spinForce, spinForce));
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        // Add more spin on collision
+        rb.AddTorque(Random.Range(-spinForce / 2, spinForce / 2));
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\MovingObstacles.cs ===
+
+using UnityEngine;
+
+public class MovingObstacle : MonoBehaviour
+{
+    [SerializeField] private float moveSpeed = 2f;
+    [SerializeField] private float moveDistance = 2f;
+    private Vector3 startPos;
+
+    void Start()
+    {
+        startPos = transform.position;
+    }
+
+    void Update()
+    {
+        float newX = startPos.x + Mathf.Sin(Time.time * moveSpeed) * moveDistance;
+        transform.position = new Vector3(newX, transform.position.y, transform.position.z);
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\Peg_Wobbel.cs ===
+
+using UnityEngine;
+
+public class PegWobble : MonoBehaviour
+{
+    [SerializeField] private float wobbleAmount = 5f;
+    [SerializeField] private float wobbleSpeed = 2f;
+    private Vector3 startRotation;
+
+    void Start()
+    {
+        startRotation = transform.eulerAngles;
+    }
+
+    void Update()
+    {
+        float wobble = Mathf.Sin(Time.time * wobbleSpeed) * wobbleAmount;
+        transform.eulerAngles = startRotation + new Vector3(0, 0, wobble);
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\ScoreManager.cs ===
+
+using UnityEngine;
+using TMPro;
+
+public class ScoreManager : MonoBehaviour
+{
+    public static ScoreManager Instance { get; private set; }
+    [SerializeField] private TextMeshProUGUI scoreText;
+    private int currentScore = 0;
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    public void AddScore(int points)
+    {
+        currentScore += points;
+        UpdateScoreDisplay();
+    }
+
+    private void UpdateScoreDisplay()
+    {
+        scoreText.text = $"Score: {currentScore}";
+    }
+}
+
+=== End of Script ===
+
+
+=== Script: D:\Work\School\LaSalle\Unity\PachinkoGame\Assets\Scribts\ScoringSlot.cs ===
+
+using UnityEngine;
+
+public class ScoringSlot : MonoBehaviour
+{
+    [SerializeField] private int pointValue = 100;
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Ball"))
+        {
+            ScoreManager.Instance.AddScore(pointValue);
+            Destroy(other.gameObject);
+        }
+    }
+}
+
+=== End of Script ===
+
