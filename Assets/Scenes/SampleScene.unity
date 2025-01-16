@@ -4303,8 +4303,8 @@ MonoBehaviour:
   moveSpeed: 4
   minX: -5
   maxX: 5
-  maxY: 4.5
   countdownText: {fileID: 900311822}
+  countdownTextSize: 200
 --- !u!212 &738258972
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -9458,7 +9458,7 @@ Transform:
   m_GameObject: {fileID: 1548795827}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.307889, y: -5.596055, z: 0.065202825}
+  m_LocalPosition: {x: 2.91, y: -5.596055, z: 0.065202825}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
